@@ -8,14 +8,17 @@ import (
 )
 
 // Service validates task operations before accessing the repository.
+// Errors retain their identity for errors.Is and errors.As.
 type Service struct {
 	repository Repository
 }
 
+// NewService returns a service backed by repository, which must be non-nil.
 func NewService(repository Repository) *Service {
 	return &Service{repository: repository}
 }
 
+// List returns a non-nil task snapshot ordered by ascending ID.
 func (s *Service) List() ([]Task, error) {
 	tasks, err := s.repository.List()
 	if err != nil {
@@ -24,6 +27,8 @@ func (s *Service) List() ([]Task, error) {
 	return tasks, nil
 }
 
+// Create trims name and creates a task with a repository-assigned ID.
+// Blank names and invalid statuses return an apperrors.ValidationError.
 func (s *Service) Create(name string, status Status) (Task, error) {
 	name, err := validateFields(name, status)
 	if err != nil {
@@ -37,6 +42,8 @@ func (s *Service) Create(name string, status Status) (Task, error) {
 	return created, nil
 }
 
+// Update replaces name and status while preserving ID. Invalid input returns an
+// apperrors.ValidationError; a missing task returns a wrapped apperrors.ErrNotFound.
 func (s *Service) Update(id int64, name string, status Status) (Task, error) {
 	if id <= 0 {
 		return Task{}, &apperrors.ValidationError{Field: "id", Message: "must be positive"}
@@ -53,6 +60,8 @@ func (s *Service) Update(id int64, name string, status Status) (Task, error) {
 	return updated, nil
 }
 
+// Delete removes a task. Invalid IDs return an apperrors.ValidationError;
+// missing tasks return a wrapped apperrors.ErrNotFound.
 func (s *Service) Delete(id int64) error {
 	if id <= 0 {
 		return &apperrors.ValidationError{Field: "id", Message: "must be positive"}

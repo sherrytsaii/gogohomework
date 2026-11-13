@@ -15,13 +15,20 @@ import (
 const maxRequestBytes = 1 << 20
 
 // TaskService defines the operations used by the task HTTP handlers.
+// Implementations validate task fields, support concurrent use, and preserve
+// shared apperrors categories. A *task.Service satisfies this interface.
 type TaskService interface {
+	// List returns a snapshot ordered by ascending ID.
 	List() ([]task.Task, error)
+	// Create validates the fields and returns a task with a server-assigned ID.
 	Create(name string, status task.Status) (task.Task, error)
+	// Update replaces the fields of an existing task while preserving its ID.
 	Update(id int64, name string, status task.Status) (task.Task, error)
+	// Delete removes an existing task or returns a shared not-found error.
 	Delete(id int64) error
 }
 
+// taskInput uses pointers to distinguish missing or null fields from zero values.
 type taskInput struct {
 	Name   *string      `json:"name"`
 	Status *task.Status `json:"status"`
@@ -83,6 +90,8 @@ func (h *handler) deleteTask(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// readTaskInput checks request format and required fields.
+// On false, the error response is already written and callers must return.
 func (h *handler) readTaskInput(w http.ResponseWriter, r *http.Request) (taskInput, bool) {
 	mediaType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if err != nil || mediaType != "application/json" {

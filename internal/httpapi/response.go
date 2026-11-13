@@ -18,6 +18,7 @@ type errorDetail struct {
 	Message string `json:"message"`
 }
 
+// writeServiceError maps application errors to HTTP responses without leaking internal details.
 func (h *handler) writeServiceError(w http.ResponseWriter, r *http.Request, err error) {
 	switch {
 	case errors.Is(err, apperrors.ErrInvalidInput):
@@ -39,6 +40,8 @@ func (h *handler) writeError(w http.ResponseWriter, r *http.Request, status int,
 	h.writeJSON(w, r, status, errorResponse{Error: errorDetail{Code: code, Message: message}})
 }
 
+// writeJSON encodes before sending headers and omits the body for HEAD requests.
+// Encoding failures return 500; write failures are logged.
 func (h *handler) writeJSON(w http.ResponseWriter, r *http.Request, status int, value any) {
 	body, err := json.Marshal(value)
 	if err != nil {

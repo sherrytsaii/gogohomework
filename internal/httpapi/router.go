@@ -1,4 +1,3 @@
-// Package httpapi exposes application services over HTTP.
 package httpapi
 
 import (
@@ -11,7 +10,8 @@ type handler struct {
 	logger *slog.Logger
 }
 
-// NewRouter registers the task endpoints and JSON error responses.
+// NewRouter registers the task endpoints, JSON errors, and access logging.
+// tasks must support concurrent use. A nil logger selects slog.Default.
 func NewRouter(tasks TaskService, logger *slog.Logger) http.Handler {
 	if logger == nil {
 		logger = slog.Default()
@@ -27,7 +27,7 @@ func NewRouter(tasks TaskService, logger *slog.Logger) http.Handler {
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		h.writeError(w, r, http.StatusNotFound, "not_found", "resource not found")
 	})
-	return mux
+	return accessLog(mux, logger)
 }
 
 func (h *handler) methodNotAllowed(allow string) http.HandlerFunc {
