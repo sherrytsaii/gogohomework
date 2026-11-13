@@ -27,5 +27,5 @@
 - Review the diff for correctness, readability, concurrency safety, and compliance with the agreed requirements.
 - Keep changes focused on the requested scope and exclude unrelated files or generated artifacts.
 - Verify that tests cover the changed behavior and documentation reflects relevant changes.
-- Commit cohesive changes after the required checks pass, using concise, descriptive commit messages.
-- Report completed changes, validation results, and the commit hash when applicable.
+- Present completed changes and validation results for user review; wait for explicit user approval before each commit.
+- After approval and successful checks, commit cohesive changes using concise, descriptive messages and report the commit hash.
